@@ -18,6 +18,9 @@ pub enum ASPMatchError {
     Parser(#[from] nom::Err<nom::error::Error<Vec<u8>>>),
 }
 
+/// Parse IPRecord from byte slice assuming little endianness
+///
+/// Returns remaining bytes
 pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
     let (i, (x, y)) = tuple((le_f32, le_f32))(input)?;
     let (i, (xi, yi)) = tuple((le_i32, le_i32))(i)?;
@@ -45,6 +48,9 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
     ))
 }
 
+/// Parse IPMatch from byte slice assuming little endianness
+///
+/// Returns remaining bytes
 pub fn ipmatch(input: &[u8]) -> IResult<&[u8], IPMatch> {
     let (i, (size_1, size_2)) = tuple((le_u64, le_u64))(input)?;
     let (i, image_1_ip_records) = count(iprecord, size_1 as usize)(i)?;
@@ -58,25 +64,28 @@ pub fn ipmatch(input: &[u8]) -> IResult<&[u8], IPMatch> {
     ))
 }
 
+/// Parse IPMatch from file assuming file fits in RAM
 pub fn parse_match_file(match_file: &File) -> Result<IPMatch, ASPMatchError> {
     let mut buf_reader = BufReader::new(match_file);
     let mut buf = vec![];
     buf_reader.read_to_end(&mut buf)?;
-    // let (_, m ) = ipmatch(&buf).map_err(|e: nom::Err<&[u8]>| ASPMatchError::Parser(e.to_owned()))?;
     let (_, m) = ipmatch(&buf).map_err(|e| ASPMatchError::Parser(e.to_owned()))?;
     Ok(m)
 }
 
+/// Parse IPMatch from file at path, assuming file fits in RAM
 pub fn parse_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, ASPMatchError> {
     let match_file = File::open(path)?;
     parse_match_file(&match_file)
 }
 
+/// Dump IPMatch to file
 pub fn dump_match_file(ipmatch: &IPMatch, match_file: &mut File) -> Result<(), ASPMatchError> {
-    match_file.write_all(ipmatch.as_bytes().as_slice())?;
+    match_file.write_all(ipmatch.as_le_bytes().as_slice())?;
     Ok(())
 }
 
+/// Dump IPMatch to file at path
 pub fn dump_match_file_path<P: AsRef<Path>>(
     ipmatch: &IPMatch,
     path: P,
@@ -120,7 +129,7 @@ mod tests {
     #[test]
     fn test_iprecord() {
         let expected = dummy_iprecord();
-        let input: Vec<u8> = expected.as_bytes();
+        let input: Vec<u8> = expected.as_le_bytes();
         let (i, iprecord) = iprecord(&input).unwrap();
         assert!(i.is_empty());
         assert_eq!(iprecord, expected);
@@ -129,7 +138,7 @@ mod tests {
     #[test]
     fn test_ipmatch() {
         let expected = dummy_ipmatch();
-        let input: Vec<u8> = expected.as_bytes();
+        let input: Vec<u8> = expected.as_le_bytes();
         let (i, ipmatch) = ipmatch(&input).unwrap();
         assert!(i.is_empty());
         assert_eq!(ipmatch, expected);

@@ -11,14 +11,14 @@ fn random_iprecord() -> IPRecord {
     IPRecord {
         x: rng.gen(),
         y: rng.gen(),
-        xi: rng.gen(),
-        yi: rng.gen(),
+        xi: rng.gen_range(-100..=100),
+        yi: rng.gen_range(-100..=100),
         orientation: rng.gen(),
         scale: rng.gen(),
         interest: rng.gen(),
         polarity: rng.gen(),
-        octave: rng.gen(),
-        scale_lvl: rng.gen(),
+        octave: rng.gen_range(0..=100),
+        scale_lvl: rng.gen_range(0..=100),
         ndesc,
         desc: vec![rng.gen(); ndesc as usize],
     }
@@ -37,10 +37,10 @@ fn random_ipmatch() -> IPMatch {
 }
 
 fn main() {
-    let matches = App::new("My Super Program")
+    let matches = App::new("random")
         .version(crate_version!())
         .author(crate_authors!("\n"))
-        .about("Does awesome things")
+        .about("dump random match file to disk")
         .arg(
             Arg::with_name("output")
                 .value_name("OUTPUT")

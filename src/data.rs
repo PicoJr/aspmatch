@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct IPRecord {
     pub x: f32,
     pub y: f32,
@@ -15,19 +15,27 @@ pub struct IPRecord {
 }
 
 impl IPRecord {
-    pub fn as_bytes(&self) -> Vec<u8> {
+    /// Return IPRecord as little endian bytes
+    ///
+    /// ```
+    /// use aspmatch::IPRecord;
+    /// let record = IPRecord::default();
+    /// let expected = vec![0; 1 * 8 + 9 * 4 + 1]; // 1 u64, 9 u32/f32, 1 u8
+    /// assert_eq!(record.as_le_bytes(), expected);
+    /// ```
+    pub fn as_le_bytes(&self) -> Vec<u8> {
         vec![
-            self.x.to_le_bytes().to_vec(),           // x
-            self.y.to_le_bytes().to_vec(),           // y
-            self.xi.to_le_bytes().to_vec(),          // xi
-            self.yi.to_le_bytes().to_vec(),          // yi
-            self.orientation.to_le_bytes().to_vec(), // orientation
-            self.scale.to_le_bytes().to_vec(),       // scale
-            self.interest.to_le_bytes().to_vec(),    // interest
-            self.polarity.to_le_bytes().to_vec(),    // polarity
-            self.octave.to_le_bytes().to_vec(),      // octave
-            self.scale_lvl.to_le_bytes().to_vec(),   // scale lvl
-            self.ndesc.to_le_bytes().to_vec(),       // ndesc
+            self.x.to_le_bytes().to_vec(),
+            self.y.to_le_bytes().to_vec(),
+            self.xi.to_le_bytes().to_vec(),
+            self.yi.to_le_bytes().to_vec(),
+            self.orientation.to_le_bytes().to_vec(),
+            self.scale.to_le_bytes().to_vec(),
+            self.interest.to_le_bytes().to_vec(),
+            self.polarity.to_le_bytes().to_vec(),
+            self.octave.to_le_bytes().to_vec(),
+            self.scale_lvl.to_le_bytes().to_vec(),
+            self.ndesc.to_le_bytes().to_vec(),
             self.desc
                 .iter()
                 .map(|e| e.to_le_bytes().to_vec())
@@ -40,18 +48,26 @@ impl IPRecord {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct IPMatch {
     pub image_1: Vec<IPRecord>,
     pub image_2: Vec<IPRecord>,
 }
 
 impl IPMatch {
-    pub fn as_bytes(&self) -> Vec<u8> {
+    /// Return IPMatch as little endian bytes
+    ///
+    /// ```
+    /// use aspmatch::IPMatch;
+    /// let _match = IPMatch::default();
+    /// let expected = vec![0; 2 * 8]; // 2 * u64, empty records
+    /// assert_eq!(_match.as_le_bytes(), expected);
+    /// ```
+    pub fn as_le_bytes(&self) -> Vec<u8> {
         let size_1_bytes = self.image_1.len().to_le_bytes().into_iter();
         let size_2_bytes = self.image_2.len().to_le_bytes().into_iter();
-        let image_1_bytes = self.image_1.iter().map(|i| i.as_bytes()).flatten();
-        let image_2_bytes = self.image_2.iter().map(|i| i.as_bytes()).flatten();
+        let image_1_bytes = self.image_1.iter().map(|i| i.as_le_bytes()).flatten();
+        let image_2_bytes = self.image_2.iter().map(|i| i.as_le_bytes()).flatten();
         size_1_bytes
             .chain(size_2_bytes.chain(image_1_bytes.chain(image_2_bytes)))
             .collect()
