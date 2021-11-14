@@ -1,7 +1,7 @@
 use crate::data::{IPMatch, IPRecord};
 use nom::multi::{count, separated_list0};
 use nom::number::complete::{le_f32, le_i32, le_u32, le_u64, le_u8};
-use nom::sequence::{tuple};
+use nom::sequence::tuple;
 use nom::IResult;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -18,7 +18,9 @@ pub enum ASPMatchError {
     #[error("io error")]
     IO(#[from] io::Error),
     #[error("parser error")]
-    Parser(#[from] nom::Err<nom::error::Error<Vec<u8>>>),
+    BinaryParser(#[from] nom::Err<nom::error::Error<Vec<u8>>>),
+    #[error("parser error")]
+    TextParser(#[from] nom::Err<nom::error::Error<String>>),
 }
 
 pub fn iprecord_text(input: &str) -> IResult<&str, IPRecord> {
@@ -125,20 +127,20 @@ pub fn ipmatch_text(input: &str) -> IResult<&str, IPMatch> {
         nom::character::complete::u64,
         nom::character::complete::space1,
         nom::character::complete::u64,
-        nom::character::complete::line_ending)
-    )(input)?;
+        nom::character::complete::line_ending,
+    ))(input)?;
     let (i, ip_records) = verify(
-        separated_list0(
-            nom::character::complete::line_ending,
-            iprecord_text
-        ),
-        |v: &[IPRecord]| v.len() == (size_1 + size_2) as usize
+        separated_list0(nom::character::complete::line_ending, iprecord_text),
+        |v: &[IPRecord]| v.len() == (size_1 + size_2) as usize,
     )(i)?;
     let (image_1_ip_records, image_2_ip_records) = ip_records.split_at(size_1 as usize);
-    Ok((i, IPMatch {
-        image_1: image_1_ip_records.to_vec(),
-        image_2: image_2_ip_records.to_vec(),
-    }))
+    Ok((
+        i,
+        IPMatch {
+            image_1: image_1_ip_records.to_vec(),
+            image_2: image_2_ip_records.to_vec(),
+        },
+    ))
 }
 
 /// Parse IPMatch from byte slice assuming little endianness
@@ -167,41 +169,80 @@ pub fn ipmatch(input: &[u8]) -> IResult<&[u8], IPMatch> {
     ))
 }
 
-/// Parse IPMatch from file assuming file fits in RAM
-pub fn parse_match_file(match_file: &File) -> Result<IPMatch, ASPMatchError> {
+/// Parse IPMatch from text file assuming file fits in RAM
+pub fn parse_text_match_file(match_file: &File) -> Result<IPMatch, ASPMatchError> {
     let mut buf_reader = BufReader::new(match_file);
-    let mut buf = vec![];
-    buf_reader.read_to_end(&mut buf)?;
-    let (_, m) = ipmatch(&buf).map_err(|e| ASPMatchError::Parser(e.to_owned()))?;
+    let mut buf = String::new();
+    buf_reader.read_to_string(&mut buf)?;
+    let (_, m) = ipmatch_text(&buf).map_err(|e| ASPMatchError::TextParser(e.to_owned()))?;
     Ok(m)
 }
 
-/// Parse IPMatch from file at path, assuming file fits in RAM
-pub fn parse_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, ASPMatchError> {
+/// Parse IPMatch from binary file assuming file fits in RAM
+pub fn parse_binary_match_file(match_file: &File) -> Result<IPMatch, ASPMatchError> {
+    let mut buf_reader = BufReader::new(match_file);
+    let mut buf = vec![];
+    buf_reader.read_to_end(&mut buf)?;
+    let (_, m) = ipmatch(&buf).map_err(|e| ASPMatchError::BinaryParser(e.to_owned()))?;
+    Ok(m)
+}
+
+/// Parse IPMatch from text file at path, assuming file fits in RAM
+pub fn parse_text_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, ASPMatchError> {
     let match_file = File::open(path)?;
-    parse_match_file(&match_file)
+    parse_text_match_file(&match_file)
+}
+
+/// Parse IPMatch from binary file at path, assuming file fits in RAM
+pub fn parse_binary_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, ASPMatchError> {
+    let match_file = File::open(path)?;
+    parse_binary_match_file(&match_file)
 }
 
 /// Dump IPMatch to file
-pub fn dump_match_file(ipmatch: &IPMatch, match_file: &mut File) -> Result<(), ASPMatchError> {
+pub fn dump_match_as_text_to_file(
+    ipmatch: &IPMatch,
+    match_file: &mut File,
+) -> Result<(), ASPMatchError> {
+    match_file.write_all(ipmatch.as_text().as_bytes())?;
+    Ok(())
+}
+
+/// Dump IPMatch to file
+pub fn dump_match_as_binary_to_file(
+    ipmatch: &IPMatch,
+    match_file: &mut File,
+) -> Result<(), ASPMatchError> {
     match_file.write_all(ipmatch.as_le_bytes().as_slice())?;
     Ok(())
 }
 
-/// Dump IPMatch to file at path
-pub fn dump_match_file_path<P: AsRef<Path>>(
+/// Dump IPMatch as text to file at path
+pub fn dump_match_file_as_text_to_path<P: AsRef<Path>>(
     ipmatch: &IPMatch,
     path: P,
 ) -> Result<(), ASPMatchError> {
     let mut match_file = OpenOptions::new().write(true).create(true).open(path)?;
-    dump_match_file(ipmatch, &mut match_file)
+    dump_match_as_text_to_file(ipmatch, &mut match_file)
+}
+
+/// Dump IPMatch as binary to file at path
+pub fn dump_match_file_as_binary_to_path<P: AsRef<Path>>(
+    ipmatch: &IPMatch,
+    path: P,
+) -> Result<(), ASPMatchError> {
+    let mut match_file = OpenOptions::new().write(true).create(true).open(path)?;
+    dump_match_as_binary_to_file(ipmatch, &mut match_file)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::data::{IPMatch, IPRecord};
-    use crate::parser::{ipmatch, iprecord, iprecord_text, ipmatch_text};
-    use crate::{dump_match_file, parse_match_file};
+    use crate::parser::{
+        dump_match_as_text_to_file, ipmatch, ipmatch_text, iprecord, iprecord_text,
+        parse_text_match_file,
+    };
+    use crate::{dump_match_as_binary_to_file, parse_binary_match_file};
     use std::io::{Seek, SeekFrom};
 
     fn dummy_iprecord() -> IPRecord {
@@ -266,13 +307,26 @@ mod tests {
     }
 
     #[test]
-    fn test_dump_and_parse_match_file() {
+    fn test_dump_and_parse_text_match_file() {
         let expected = dummy_ipmatch();
         let mut tmpfile = tempfile::tempfile().unwrap();
-        let dump = dump_match_file(&expected, &mut tmpfile);
+        let dump = dump_match_as_text_to_file(&expected, &mut tmpfile);
         assert!(dump.is_ok());
         tmpfile.seek(SeekFrom::Start(0)).unwrap();
-        let parse = parse_match_file(&tmpfile);
+        let parse = parse_text_match_file(&tmpfile);
+        println!("{:?}", parse);
+        assert!(parse.is_ok());
+        assert_eq!(parse.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_dump_and_parse_binary_match_file() {
+        let expected = dummy_ipmatch();
+        let mut tmpfile = tempfile::tempfile().unwrap();
+        let dump = dump_match_as_binary_to_file(&expected, &mut tmpfile);
+        assert!(dump.is_ok());
+        tmpfile.seek(SeekFrom::Start(0)).unwrap();
+        let parse = parse_binary_match_file(&tmpfile);
         println!("{:?}", parse);
         assert!(parse.is_ok());
         assert_eq!(parse.unwrap(), expected);

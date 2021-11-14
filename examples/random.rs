@@ -1,4 +1,4 @@
-use aspmatch::{dump_match_file_path, IPMatch, IPRecord};
+use aspmatch::{dump_match_file_as_binary_to_path, IPMatch, IPRecord};
 use clap::{crate_authors, crate_version, App, Arg};
 use rand::prelude::*;
 use std::path::PathBuf;
@@ -51,7 +51,7 @@ fn main() {
         .get_matches();
     let output_file = matches.value_of("output").expect("OUTPUT is required");
     let ipmatch = random_ipmatch();
-    match dump_match_file_path(&ipmatch, PathBuf::from(output_file)) {
+    match dump_match_file_as_binary_to_path(&ipmatch, PathBuf::from(output_file)) {
         Ok(_) => {
             println!("random ipmatch written to {}", output_file);
         }

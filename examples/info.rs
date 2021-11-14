@@ -1,4 +1,4 @@
-use aspmatch::{parse_match_file_path};
+use aspmatch::parse_binary_match_file_path;
 use clap::{crate_authors, crate_version, App, Arg};
 use std::path::PathBuf;
 
@@ -18,7 +18,7 @@ fn main() {
         )
         .get_matches();
     let input_file = matches.value_of("input").expect("INPUT is required");
-    match parse_match_file_path(PathBuf::from(input_file)) {
+    match parse_binary_match_file_path(PathBuf::from(input_file)) {
         Ok(ipmatch) => {
             println!("{}", ipmatch.as_text());
         }
