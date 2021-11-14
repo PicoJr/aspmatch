@@ -10,6 +10,7 @@ use std::path::Path;
 
 use thiserror::Error;
 
+/// Custom Error Enum for lib consumption.
 #[derive(Error, Debug)]
 pub enum ASPMatchError {
     #[error("io error")]
@@ -21,6 +22,16 @@ pub enum ASPMatchError {
 /// Parse IPRecord from byte slice assuming little endianness
 ///
 /// Returns remaining bytes
+///
+/// ```
+/// use aspmatch::IPRecord;
+/// use aspmatch::iprecord;
+/// let record = IPRecord::default();
+/// let bytes = record.as_le_bytes();
+/// let (remaining_bytes, parsed) = iprecord(bytes.as_slice()).unwrap();
+/// assert!(remaining_bytes.is_empty());
+/// assert_eq!(parsed, record);
+/// ```
 pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
     let (i, (x, y)) = tuple((le_f32, le_f32))(input)?;
     let (i, (xi, yi)) = tuple((le_i32, le_i32))(i)?;
@@ -51,6 +62,16 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
 /// Parse IPMatch from byte slice assuming little endianness
 ///
 /// Returns remaining bytes
+///
+/// ```
+/// use aspmatch::IPMatch;
+/// use aspmatch::ipmatch;
+/// let _match = IPMatch::default();
+/// let bytes = _match.as_le_bytes();
+/// let (remaining_bytes, parsed) = ipmatch(bytes.as_slice()).unwrap();
+/// assert!(remaining_bytes.is_empty());
+/// assert_eq!(parsed, _match);
+/// ```
 pub fn ipmatch(input: &[u8]) -> IResult<&[u8], IPMatch> {
     let (i, (size_1, size_2)) = tuple((le_u64, le_u64))(input)?;
     let (i, image_1_ip_records) = count(iprecord, size_1 as usize)(i)?;

@@ -48,7 +48,7 @@ fn main() {
     let matches = App::new("info")
         .version(crate_version!())
         .author(crate_authors!("\n"))
-        .about("Does awesome things")
+        .about("Print match file content")
         .arg(
             Arg::with_name("input")
                 .value_name("INPUT")
