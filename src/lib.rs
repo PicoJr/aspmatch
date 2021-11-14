@@ -10,5 +10,5 @@ pub use data::{IPMatch, IPRecord};
 
 pub use parser::{
     dump_match_file, dump_match_file_path, ipmatch, iprecord, parse_match_file,
-    parse_match_file_path,
+    parse_match_file_path, iprecord_text, ipmatch_text
 };

@@ -1,13 +1,15 @@
 use crate::data::{IPMatch, IPRecord};
-use nom::multi::count;
+use nom::multi::{count, separated_list0};
 use nom::number::complete::{le_f32, le_i32, le_u32, le_u64, le_u8};
-use nom::sequence::tuple;
+use nom::sequence::{tuple};
 use nom::IResult;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{BufReader, Read, Write};
 use std::path::Path;
 
+use nom::character::complete::space1;
+use nom::combinator::verify;
 use thiserror::Error;
 
 /// Custom Error Enum for lib consumption.
@@ -17,6 +19,65 @@ pub enum ASPMatchError {
     IO(#[from] io::Error),
     #[error("parser error")]
     Parser(#[from] nom::Err<nom::error::Error<Vec<u8>>>),
+}
+
+pub fn iprecord_text(input: &str) -> IResult<&str, IPRecord> {
+    let (i, (x, _, y, _)) = tuple((
+        nom::number::complete::float,
+        space1, // x
+        nom::number::complete::float,
+        space1, // y
+    ))(input)?;
+    let (i, (xi, _, yi, _)) = tuple((
+        nom::character::complete::i32,
+        space1, // xi
+        nom::character::complete::i32,
+        space1, // yi
+    ))(i)?;
+    let (i, (orientation, _, scale, _, interest, _)) = tuple((
+        nom::number::complete::float,
+        space1, // orientation
+        nom::number::complete::float,
+        space1, // scale
+        nom::number::complete::float,
+        space1, // interest
+    ))(i)?;
+    let (i, (polarity, _)) = tuple((
+        nom::character::complete::u8,
+        space1, // polarity
+    ))(i)?;
+    let (i, (octave, _, scale_lvl, _)) = tuple((
+        nom::character::complete::u32,
+        space1, // octave
+        nom::character::complete::u32,
+        space1, // scale_lvl
+    ))(i)?;
+    let (i, (ndesc, _)) = tuple((
+        nom::character::complete::u64,
+        space1, // ndesc
+    ))(i)?;
+    let (i, desc) = verify(
+        separated_list0(space1, nom::number::complete::float),
+        |v: &[f32]| v.len() == ndesc as usize,
+    )(i)?;
+
+    Ok((
+        i,
+        IPRecord {
+            x,
+            y,
+            xi,
+            yi,
+            orientation,
+            scale,
+            interest,
+            polarity,
+            octave,
+            scale_lvl,
+            ndesc,
+            desc,
+        },
+    ))
 }
 
 /// Parse IPRecord from byte slice assuming little endianness
@@ -57,6 +118,27 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
             desc,
         },
     ))
+}
+
+pub fn ipmatch_text(input: &str) -> IResult<&str, IPMatch> {
+    let (i, (size_1, _, size_2, _)) = tuple((
+        nom::character::complete::u64,
+        nom::character::complete::space1,
+        nom::character::complete::u64,
+        nom::character::complete::line_ending)
+    )(input)?;
+    let (i, ip_records) = verify(
+        separated_list0(
+            nom::character::complete::line_ending,
+            iprecord_text
+        ),
+        |v: &[IPRecord]| v.len() == (size_1 + size_2) as usize
+    )(i)?;
+    let (image_1_ip_records, image_2_ip_records) = ip_records.split_at(size_1 as usize);
+    Ok((i, IPMatch {
+        image_1: image_1_ip_records.to_vec(),
+        image_2: image_2_ip_records.to_vec(),
+    }))
 }
 
 /// Parse IPMatch from byte slice assuming little endianness
@@ -118,7 +200,7 @@ pub fn dump_match_file_path<P: AsRef<Path>>(
 #[cfg(test)]
 mod tests {
     use crate::data::{IPMatch, IPRecord};
-    use crate::parser::{ipmatch, iprecord};
+    use crate::parser::{ipmatch, iprecord, iprecord_text, ipmatch_text};
     use crate::{dump_match_file, parse_match_file};
     use std::io::{Seek, SeekFrom};
 
@@ -157,10 +239,28 @@ mod tests {
     }
 
     #[test]
+    fn test_iprecord_text() {
+        let expected = dummy_iprecord();
+        let input = expected.as_text();
+        let (i, iprecord) = iprecord_text(&input).unwrap();
+        assert!(i.is_empty());
+        assert_eq!(iprecord, expected);
+    }
+
+    #[test]
     fn test_ipmatch() {
         let expected = dummy_ipmatch();
         let input: Vec<u8> = expected.as_le_bytes();
         let (i, ipmatch) = ipmatch(&input).unwrap();
+        assert!(i.is_empty());
+        assert_eq!(ipmatch, expected);
+    }
+
+    #[test]
+    fn test_ipmatch_text() {
+        let expected = dummy_ipmatch();
+        let input = expected.as_text();
+        let (i, ipmatch) = ipmatch_text(&input).unwrap();
         assert!(i.is_empty());
         assert_eq!(ipmatch, expected);
     }

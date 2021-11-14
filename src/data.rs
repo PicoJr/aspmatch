@@ -46,6 +46,28 @@ impl IPRecord {
         .flatten()
         .collect()
     }
+
+    pub fn as_text(&self) -> String {
+        format!(
+            "{} {} {} {} {} {} {} {} {} {} {} {}",
+            self.x,
+            self.y,
+            self.xi,
+            self.yi,
+            self.orientation,
+            self.scale,
+            self.interest,
+            self.polarity,
+            self.octave,
+            self.scale_lvl,
+            self.ndesc,
+            self.desc
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        )
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -71,5 +93,29 @@ impl IPMatch {
         size_1_bytes
             .chain(size_2_bytes.chain(image_1_bytes.chain(image_2_bytes)))
             .collect()
+    }
+
+    pub fn as_text(&self) -> String {
+        let header = format!("{} {}", self.image_1.len(), self.image_2.len());
+        let image_1_txt = self
+            .image_1
+            .iter()
+            .map(|r| r.as_text())
+            .collect::<Vec<String>>()
+            .join("\n");
+        let image_2_txt = self
+            .image_2
+            .iter()
+            .map(|r| r.as_text())
+            .collect::<Vec<String>>()
+            .join("\n");
+        vec![
+            header,
+            "\n".to_string(),
+            image_1_txt,
+            "\n".to_string(),
+            image_2_txt,
+        ]
+        .concat()
     }
 }
