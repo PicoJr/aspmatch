@@ -76,7 +76,6 @@ pub fn iprecord_text(input: &str) -> IResult<&str, IPRecord> {
             polarity,
             octave,
             scale_lvl,
-            ndesc,
             desc,
         },
     ))
@@ -116,7 +115,6 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
             polarity,
             octave,
             scale_lvl,
-            ndesc,
             desc,
         },
     ))
@@ -199,12 +197,21 @@ pub fn parse_binary_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, 
     parse_binary_match_file(&match_file)
 }
 
+pub fn dump_match_as_text<W: Write>(ipmatch: &IPMatch, w: &mut W) -> Result<(), ASPMatchError> {
+    w.write_all(ipmatch.as_text().as_bytes())?;
+    Ok(())
+}
+
 /// Dump IPMatch to file
 pub fn dump_match_as_text_to_file(
     ipmatch: &IPMatch,
     match_file: &mut File,
 ) -> Result<(), ASPMatchError> {
-    match_file.write_all(ipmatch.as_text().as_bytes())?;
+    dump_match_as_text(ipmatch, match_file)
+}
+
+pub fn dump_match_as_binary<W: Write>(ipmatch: &IPMatch, w: &mut W) -> Result<(), ASPMatchError> {
+    w.write_all(ipmatch.as_le_bytes().as_slice())?;
     Ok(())
 }
 
@@ -213,12 +220,11 @@ pub fn dump_match_as_binary_to_file(
     ipmatch: &IPMatch,
     match_file: &mut File,
 ) -> Result<(), ASPMatchError> {
-    match_file.write_all(ipmatch.as_le_bytes().as_slice())?;
-    Ok(())
+    dump_match_as_binary(ipmatch, match_file)
 }
 
 /// Dump IPMatch as text to file at path
-pub fn dump_match_file_as_text_to_path<P: AsRef<Path>>(
+pub fn dump_match_as_text_to_path<P: AsRef<Path>>(
     ipmatch: &IPMatch,
     path: P,
 ) -> Result<(), ASPMatchError> {
@@ -227,7 +233,7 @@ pub fn dump_match_file_as_text_to_path<P: AsRef<Path>>(
 }
 
 /// Dump IPMatch as binary to file at path
-pub fn dump_match_file_as_binary_to_path<P: AsRef<Path>>(
+pub fn dump_match_as_binary_to_path<P: AsRef<Path>>(
     ipmatch: &IPMatch,
     path: P,
 ) -> Result<(), ASPMatchError> {
@@ -258,7 +264,6 @@ mod tests {
             polarity: 3,
             octave: 62,
             scale_lvl: 63,
-            ndesc,
             desc: vec![44.0; ndesc as usize],
         }
     }

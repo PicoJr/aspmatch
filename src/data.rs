@@ -10,7 +10,6 @@ pub struct IPRecord {
     pub polarity: u8,
     pub octave: u32,
     pub scale_lvl: u32,
-    pub ndesc: u64,
     pub desc: Vec<f32>,
 }
 
@@ -35,7 +34,7 @@ impl IPRecord {
             self.polarity.to_le_bytes().to_vec(),
             self.octave.to_le_bytes().to_vec(),
             self.scale_lvl.to_le_bytes().to_vec(),
-            self.ndesc.to_le_bytes().to_vec(),
+            (self.desc.len() as u64).to_le_bytes().to_vec(),
             self.desc
                 .iter()
                 .map(|e| e.to_le_bytes().to_vec())
@@ -60,7 +59,7 @@ impl IPRecord {
             self.polarity,
             self.octave,
             self.scale_lvl,
-            self.ndesc,
+            self.desc.len(),
             self.desc
                 .iter()
                 .map(|x| x.to_string())
