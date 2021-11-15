@@ -13,6 +13,11 @@ pub struct IPRecord {
     pub desc: Vec<f32>,
 }
 
+// x,y,xi,yi,orientation,scale,interest,octave,scale_lvl = 9 * 4 bytes
+// ndesc = 1 * 8 bytes
+// polarity = 1 bytes
+pub(crate) const MINIMUM_RECORD_SIZE_IN_BYTES: u32 = 8 + 9 * 4 + 1;
+
 impl IPRecord {
     /// Return IPRecord as little endian bytes
     ///

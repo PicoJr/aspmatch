@@ -1,4 +1,4 @@
-use crate::data::{IPMatch, IPRecord};
+use crate::data::{IPMatch, IPRecord, MINIMUM_RECORD_SIZE_IN_BYTES};
 use nom::multi::{count, separated_list0};
 use nom::number::complete::{le_f32, le_i32, le_u32, le_u64, le_u8};
 use nom::sequence::tuple;
@@ -8,6 +8,7 @@ use std::io;
 use std::io::{BufReader, Read, Write};
 use std::path::Path;
 
+use nom::bytes::complete::take;
 use nom::character::complete::space1;
 use nom::combinator::verify;
 use thiserror::Error;
@@ -155,7 +156,10 @@ pub fn ipmatch_text(input: &str) -> IResult<&str, IPMatch> {
 /// assert_eq!(parsed, _match);
 /// ```
 pub fn ipmatch(input: &[u8]) -> IResult<&[u8], IPMatch> {
-    let (i, (size_1, size_2)) = tuple((le_u64, le_u64))(input)?;
+    let (i, header) = take(2 * 8_usize)(input)?;
+    let (_, (size_1, size_2)) = verify(tuple((le_u64, le_u64)), |(s1, s2)| {
+        (s1 + s2) <= (input.len() / MINIMUM_RECORD_SIZE_IN_BYTES as usize) as u64
+    })(header)?; // make sure size_1 and size_2 are reasonably sized
     let (i, image_1_ip_records) = count(iprecord, size_1 as usize)(i)?;
     let (i, image_2_ip_records) = count(iprecord, size_2 as usize)(i)?;
     Ok((
