@@ -24,6 +24,20 @@ pub enum ASPMatchError {
     TextParser(#[from] nom::Err<nom::error::Error<String>>),
 }
 
+/// Parse IPRecord from text assuming
+///
+/// Returns remaining text
+///
+/// ```
+/// use aspmatch::IPRecord;
+/// use aspmatch::iprecord_text;
+/// let record = IPRecord::default();
+/// let text = record.as_text();
+/// let bytes = record.as_le_bytes();
+/// let (remaining_text, parsed) = iprecord_text(text.as_str()).unwrap();
+/// assert!(remaining_text.is_empty());
+/// assert_eq!(parsed, record);
+/// ```
 pub fn iprecord_text(input: &str) -> IResult<&str, IPRecord> {
     let (i, (x, _, y, _)) = tuple((
         nom::number::complete::float,
@@ -121,6 +135,18 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
     ))
 }
 
+/// Parse IPMatch from byte slice assuming little endianness
+///
+/// Returns remaining bytes
+///
+/// ```
+/// use aspmatch::IPMatch;
+/// use aspmatch::ipmatch_text;
+/// let _match = IPMatch::default();
+/// let text = _match.as_text();
+/// let (remaining_text, parsed) = ipmatch_text(text.as_str()).unwrap();
+/// assert_eq!(parsed, _match);
+/// ```
 pub fn ipmatch_text(input: &str) -> IResult<&str, IPMatch> {
     let (i, (size_1, _, size_2, _)) = tuple((
         nom::character::complete::u64,
@@ -201,6 +227,7 @@ pub fn parse_binary_match_file_path<P: AsRef<Path>>(path: P) -> Result<IPMatch, 
     parse_binary_match_file(&match_file)
 }
 
+/// Dump IPMatch as text
 pub fn dump_match_as_text<W: Write>(ipmatch: &IPMatch, w: &mut W) -> Result<(), ASPMatchError> {
     w.write_all(ipmatch.as_text().as_bytes())?;
     Ok(())
@@ -214,6 +241,7 @@ pub fn dump_match_as_text_to_file(
     dump_match_as_text(ipmatch, match_file)
 }
 
+/// Dump IPMatch as binary
 pub fn dump_match_as_binary<W: Write>(ipmatch: &IPMatch, w: &mut W) -> Result<(), ASPMatchError> {
     w.write_all(ipmatch.as_le_bytes().as_slice())?;
     Ok(())

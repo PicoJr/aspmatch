@@ -81,10 +81,12 @@ fn main() -> Result<(), ASPMatchError> {
                 Output::FilePath(path) => {
                     if reverse {
                         // text -> binary
-                        dump_match_as_binary_to_path(&ipmatch, path)?;
+                        dump_match_as_binary_to_path(&ipmatch, &path)?;
+                        println!("{} (text) -> {:?} (binary)", input_file, path)
                     } else {
                         // binary -> text
-                        dump_match_as_text_to_path(&ipmatch, path)?;
+                        dump_match_as_text_to_path(&ipmatch, &path)?;
+                        println!("{} (binary) -> {:?} (text)", input_file, path)
                     }
                 }
             }
