@@ -135,9 +135,9 @@ pub fn iprecord(input: &[u8]) -> IResult<&[u8], IPRecord> {
     ))
 }
 
-/// Parse IPMatch from byte slice assuming little endianness
+/// Parse IPMatch from text assuming little endianness
 ///
-/// Returns remaining bytes
+/// Returns remaining text
 ///
 /// ```
 /// use aspmatch::IPMatch;
