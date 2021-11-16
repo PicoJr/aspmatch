@@ -90,7 +90,7 @@ fn main() -> Result<(), ASPMatchError> {
             }
         }
         Err(e) => {
-            eprintln!("error: {:?}", e);
+            return Err(e);
         }
     }
     Ok(())

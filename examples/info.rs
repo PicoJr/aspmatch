@@ -1,10 +1,10 @@
-use aspmatch::parse_binary_match_file_path;
+use aspmatch::{parse_binary_match_file_path, ASPMatchError};
 use clap::{crate_authors, crate_version, App, Arg};
 use std::path::PathBuf;
 
 extern crate clap;
 
-fn main() {
+fn main() -> Result<(), ASPMatchError> {
     let matches = App::new("info")
         .version(crate_version!())
         .author(crate_authors!("\n"))
@@ -21,9 +21,8 @@ fn main() {
     match parse_binary_match_file_path(PathBuf::from(input_file)) {
         Ok(ipmatch) => {
             println!("{}", ipmatch.as_text());
+            Ok(())
         }
-        Err(e) => {
-            eprintln!("error: {:?}", e);
-        }
+        Err(e) => Err(e),
     }
 }
