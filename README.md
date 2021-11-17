@@ -1,8 +1,8 @@
-# Parse and Write match files
+# Parse and Write [Ames Stereo Pipeline](https://github.com/NeoGeographyToolkit/StereoPipeline) match files
 
 Parse and write [match files](https://stereopipeline.readthedocs.io/en/latest/outputfiles.html?highlight=match#guide-to-output-files).
 
-Inspired by [parse_match_file.py](https://github.com/NeoGeographyToolkit/StereoPipeline/blob/master/src/asp/Tools/parse_match_file.py) from [StereoPipeline](https://github.com/NeoGeographyToolkit/StereoPipeline).
+Inspired by [parse_match_file.py](https://github.com/NeoGeographyToolkit/StereoPipeline/blob/master/src/asp/Tools/parse_match_file.py).
 
 ## Examples
 
@@ -64,6 +64,12 @@ cargo run --example convert -- --reverse /tmp/match.bin.txt /tmp/match.bin.out
 
 ```
 cargo test
+```
+
+## Generate Doc
+
+```
+cargo doc
 ```
 
 ## Troubleshooting
