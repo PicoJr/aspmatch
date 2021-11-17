@@ -85,3 +85,12 @@ Error: IO(Error { kind: InvalidData, message: "stream did not contain valid UTF-
 ```
 
 > Input file is probably not a text file or the file might be corrupted.
+
+## License
+
+Dual-licensed under MIT or the Apache License V2.0.
+
+## Disclaimer
+
+1. Trademarks are the property of their respective owners.
+2. This is not an official ASP or NASA product.
