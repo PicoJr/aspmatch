@@ -53,6 +53,10 @@ output:
 Convert text match file to binary:
 
 ```
+cargo run --example convert -- --reverse /tmp/match.bin.txt /tmp/match.bin.out
+```
+
+```
 /tmp/match.bin.txt (text) -> "/tmp/match.bin.out" (binary)
 ```
 
@@ -61,3 +65,17 @@ Convert text match file to binary:
 ```
 cargo test
 ```
+
+## Troubleshooting
+
+```
+Error: BinaryParser(Error(Error { input: [...], code: Verify }))
+```
+
+> Input file is probably not a binary file or the file might be corrupted.
+
+```
+Error: IO(Error { kind: InvalidData, message: "stream did not contain valid UTF-8" })
+```
+
+> Input file is probably not a text file or the file might be corrupted.
