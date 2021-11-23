@@ -8,6 +8,7 @@ description = "parse and write match files (image to image tie points)"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 keywords = ["parser", "match", "file", "image", "tie", "point", "ames", "stereo", "pipeline"]
+include = ["src/**/*", "LICENSE", "README.md", "examples"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,3 +20,7 @@ thiserror = "1.0"
 tempfile = "3"
 clap = "~2.33"
 rand = "0.8.0"
+
+# https://github.com/rust-lang/rust/issues/88791
+[package.metadata.docs.rs]
+cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples=examples"]

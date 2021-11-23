@@ -1,6 +1,6 @@
 //! # aspmatch
 //!
-//! Parse [ASP match files](https://stereopipeline.readthedocs.io/en/latest/outputfiles.html?highlight=match#guide-to-output-files)
+//! Parse and write [ASP match files](https://stereopipeline.readthedocs.io/en/latest/outputfiles.html?highlight=match#guide-to-output-files)
 //!
 //! ## Example
 //!

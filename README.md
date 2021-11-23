@@ -86,6 +86,10 @@ Error: IO(Error { kind: InvalidData, message: "stream did not contain valid UTF-
 
 > Input file is probably not a text file or the file might be corrupted.
 
+## Changelog
+
+Please see the [CHANGELOG](CHANGELOG.md) for a release history.
+
 ## License
 
 Dual-licensed under MIT or the Apache License V2.0.
