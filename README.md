@@ -1,3 +1,7 @@
+[![aspmatch crate](https://img.shields.io/crates/v/aspmatch.svg)](https://crates.io/crates/aspmatch)
+[![aspmatch documentation](https://docs.rs/aspmatch/badge.svg)](https://docs.rs/aspmatch)
+[![GitHub license](https://img.shields.io/github/license/PicoJr/aspmatch)](https://github.com/PicoJr/aspmatch/blob/master/LICENSE)
+
 # Parse and Write [Ames Stereo Pipeline](https://github.com/NeoGeographyToolkit/StereoPipeline) match files
 
 Parse and write [match files](https://stereopipeline.readthedocs.io/en/latest/outputfiles.html?highlight=match#guide-to-output-files).

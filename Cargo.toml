@@ -7,7 +7,7 @@ repository = "https://github.com/PicoJr/aspmatch"
 description = "parse and write match files (image to image tie points)"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-keywords = ["parser", "match", "file", "image", "tie", "point", "ames", "stereo", "pipeline"]
+keywords = ["parser", "match", "file", "stereo", "pipeline"]
 include = ["src/**/*", "LICENSE", "README.md", "examples"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
